@@ -1,14 +1,22 @@
 // Default Imports
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ActivityIndicator, Button, KeyboardAvoidingView } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, ActivityIndicator, Button, KeyboardAvoidingView, Pressable } from 'react-native';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { initializeAuth, getReactNativePersistence} from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 // Internal Imports
 import { FIREBASE_AUTH } from '../../firebaseConfig';
+import AuthContext from '../api/authContext';
 
-const Login = () => {
+const Login = ({navigation} : any) => {
+
+    const { setCurrentUser, isLoggedIn, setIsLoggedIn } = useContext(AuthContext);
+
+    if(isLoggedIn){
+        return navigation.navigate('home');
+    }
+
     // React Hooks for state handling
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -20,21 +28,13 @@ const Login = () => {
         setLoading(true);
         try {
             const response = await signInWithEmailAndPassword(auth, email, password);
-            alert('success');
+            if(response){
+                setCurrentUser(response.user)
+                setIsLoggedIn(true)
+                    navigation.navigate('home')
+            }
         } catch (error) {
             alert("Login failed")
-        } finally{
-            setLoading(false);
-        }
-    }
-
-    const SignUp = async () => {
-        setLoading(true);
-        try {
-            const response = await createUserWithEmailAndPassword(auth, email, password);
-            alert('Account created successfully. Login with your credentials.');
-        } catch (error) {
-            alert("Failed to create new account")
         } finally{
             setLoading(false);
         }
@@ -51,9 +51,16 @@ const Login = () => {
             { loading ? (<ActivityIndicator size="large" color="#0000ff" />) : 
             (<>
                 <Button title="Login" onPress={SignIn}/>
-                <Button title="Create new account" onPress={SignUp}/>
             </>)}
         </KeyboardAvoidingView>
+            <Pressable 
+                onPress={
+                    () => navigation.navigate('registration')
+                }>
+                <Text style={{ marginTop: 20 , textAlign: "center"}}>   
+                    Don't have an account?
+                </Text>
+            </Pressable>
     </View>
   )
 }
@@ -72,6 +79,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 4,
         padding: 10,
-        backgroundColor: '#fff'
+        backgroundColor: '#fff',
+        marginBottom: 12
     }
 });
